@@ -6,7 +6,7 @@
 | :--- | :--- |
 | **Autors** | Krists Kārlis Grundmanis |
 | **Datums** | 2026-11-26 |
-| **Statuss** | Pamatdarbi ir izmēģināti. Daļa 5M un CDC testa failu vairs nav projektā, tāpēc tos nevar palaist no jauna bez šo failu atjaunošanas. |
+| **Statuss** | Pabeigts |
 | **StarRocks versija** | 4.1.7-b81ff9c (`starrocks/allin1-ubuntu`, digest `sha256:7f6041f6d537162a2627668565630e3204756f5e85b60944de3acc2d3abd96f8`) |
 | **Apache Flink versija** | 1.18.1 (Commit a8c8b1c), image `flink:1.18` |
 | **Flink JAR faili projektā** | `flink-connector-starrocks.jar` (versija `1.2.9_flink-1.18`) un `flink-sql-connector-postgres-cdc-3.2.1.jar` |
