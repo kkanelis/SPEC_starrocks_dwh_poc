@@ -1,0 +1,51 @@
+name: starrocks-poc
+
+services:
+  quickstart:
+    image: starrocks/allin1-ubuntu@sha256:7f6041f6d537162a2627668565630e3204756f5e85b60944de3acc2d3abd96f8
+    ports: ["8030:8030", "8040:8040", "9030:9030"]
+
+  timescaledb:
+    image: timescale/timescaledb:2.31.0-pg17      # tags jāapstiprina ar docker pull
+    command: ["postgres", "-c", "wal_level=logical"]
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?ierakstīt .env failā}
+    ports: ["${TIMESCALE_HOST_PORT:-5434}:5432"]
+    volumes: [tsdb_data:/var/lib/postgresql/data]
+
+  jobmanager:
+    image: flink:1.18.1
+    command: jobmanager
+    ports: ["${FLINK_UI_HOST_PORT:-8081}:8081"]
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+    volumes:
+      - ./binance_out:/data/binance
+      - ./connectors/flink-connector-starrocks.jar:/opt/flink/lib/flink-connector-starrocks.jar:ro
+      - ./connectors/flink-sql-connector-postgres-cdc-3.2.1.jar:/opt/flink/lib/flink-sql-connector-postgres-cdc-3.2.1.jar:ro
+
+  taskmanager:
+    image: flink:1.18.1
+    command: taskmanager
+    depends_on: [jobmanager]
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 4
+    volumes:
+      - ./binance_out:/data/binance
+      - ./connectors/flink-connector-starrocks.jar:/opt/flink/lib/flink-connector-starrocks.jar:ro
+      - ./connectors/flink-sql-connector-postgres-cdc-3.2.1.jar:/opt/flink/lib/flink-sql-connector-postgres-cdc-3.2.1.jar:ro
+
+  be-proxy:
+    image: alpine/socat
+    network_mode: "service:taskmanager"
+    depends_on: [taskmanager]
+    restart: unless-stopped
+    command: TCP-LISTEN:8040,fork,reuseaddr TCP:quickstart:8040
+
+volumes:
+  tsdb_data:
